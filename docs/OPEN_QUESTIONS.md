@@ -166,6 +166,12 @@
 
 - **当前默认**：计分事件按阵营拆分；只有本命阵营球的分数 ×2；混合清除中的其他阵营球不加倍。
 
+### Q26. M1 的 `__sdwxDebug.createBall` 参数 — `OPEN(P1)`
+
+- 宪法 6.8 要求 `createBall(faction, tier, x, y)`，但 M1 仍使用原型的 5 阶水果数据，尚无阵营/阶字段。
+- **当前默认**：M1 的 `__sdwxDebug.createBall` 暂沿用 `(level, x, y)`，与 `__tripleMelonDebug.createFruit` 行为一致；M2 数据化时切换为 `(faction, tier, x, y)` 并同步测试。
+- 影响范围仅调试/测试契约，不影响玩家玩法。
+
 ---
 
 ## 三、当前采用的解释（ASSUMED / RESOLVED / CONFIRMED）

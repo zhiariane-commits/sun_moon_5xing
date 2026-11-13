@@ -2,8 +2,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { JSDOM } = require("jsdom");
 const root = path.resolve(__dirname, "..");
-const html = fs.readFileSync(path.join(root, "outputs", "index.html"), "utf8")
-  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+const source = fs.readFileSync(path.join(root, "outputs", "index.html"), "utf8");
+const html = source.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+const scripts = [...source.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
 const dom = new JSDOM(html, { runScripts: "outside-only", pretendToBeVisual: true, url: "http://localhost/" });
 const { window } = dom;
 let queue = [];
@@ -22,8 +23,9 @@ window.HTMLCanvasElement.prototype.getContext = function getContext() {
     set(target, property, value) { target[property] = value; return true; }
   });
 };
-window.eval(fs.readFileSync(path.join(root, "outputs", "lib", "matter.min.js"), "utf8"));
-window.eval(fs.readFileSync(path.join(root, "outputs", "game.js"), "utf8"));
+for (const script of scripts) {
+  window.eval(fs.readFileSync(path.join(root, "outputs", script), "utf8"));
+}
 const debug = window.__tripleMelonDebug;
 let now = window.performance.now();
 function tick(frames) {

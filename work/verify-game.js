@@ -3,8 +3,9 @@ const path = require("node:path");
 const { JSDOM } = require("jsdom");
 
 const root = path.resolve(__dirname, "..");
-const html = fs.readFileSync(path.join(root, "outputs", "index.html"), "utf8")
-  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+const source = fs.readFileSync(path.join(root, "outputs", "index.html"), "utf8");
+const html = source.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+const scripts = [...source.matchAll(/<script\s+src="([^"]+)"/g)].map((match) => match[1]);
 
 const dom = new JSDOM(html, {
   runScripts: "outside-only",
@@ -34,17 +35,35 @@ window.HTMLCanvasElement.prototype.getContext = function getContext() {
   });
 };
 
-window.eval(fs.readFileSync(path.join(root, "outputs", "lib", "matter.min.js"), "utf8"));
-window.eval(fs.readFileSync(path.join(root, "outputs", "game.js"), "utf8"));
+for (const script of scripts) {
+  window.eval(fs.readFileSync(path.join(root, "outputs", script), "utf8"));
+}
 
 const debug = window.__tripleMelonDebug;
 if (!debug) throw new Error("Game debug API was not initialized");
+const SDWX = window.SDWX;
+const modernDebug = window.__sdwxDebug;
 
 const results = [];
 function check(name, condition, detail = "") {
   if (!condition) throw new Error(`${name} failed${detail ? `: ${detail}` : ""}`);
   results.push(name);
 }
+
+const modules = ["config", "rng", "storage", "state", "scoring", "physics", "merge", "board", "balls", "effects", "hud", "overlays", "input", "audio"];
+check("SDWX exposes every M1 module", modules.every((name) => SDWX[name]));
+const debugKeys = ["state", "balls", "createBall", "dropBall", "setDropX", "tick", "startRun", "endRun", "triggerSkill", "triggerUlt", "setSeed"];
+check("__sdwxDebug exposes the debug contract", debugKeys.every((key) => key in modernDebug));
+
+SDWX.rng.seed(12345);
+const firstSpawn = SDWX.rng.spawnLevel();
+SDWX.rng.seed(12345);
+check("seeded rng is reproducible", SDWX.rng.spawnLevel() === firstSpawn);
+
+SDWX.state.setPhase("over");
+check("setPhase over syncs legacy flag", debug.state.phase === "over" && debug.state.gameOver === true);
+SDWX.state.setPhase("playing");
+check("setPhase playing clears legacy flag", debug.state.phase === "playing" && debug.state.gameOver === false);
 
 function ageFruits(ms = 200) {
   debug.state.now += ms;

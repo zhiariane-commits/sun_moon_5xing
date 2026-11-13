@@ -79,7 +79,7 @@
 
 ### 验收
 
-- `node work/check-all.js` 全绿，16 项 + 帧循环通过。
+- `node work/check-all.js` 全绿，21 项 + 帧循环通过。
 - 浏览器里玩法与重构前一致；用户文字确认“没变”。
 - 没有新增全局变量；只有 `window.SDWX`、过渡用的 `window.__tripleMelonDebug` 和新测试契约 `window.__sdwxDebug`。
 
@@ -87,6 +87,14 @@
 
 - 这是“搬家”，不是“改玩法”。不要顺手改数值、改视觉、改文案。
 - 如果拆分导致测试 harness 无法加载，优先改测试加载顺序，不要为了测试把逻辑塞回单文件。
+
+### 实施记录（2026-11-13）
+
+- 已拆为 `config/rng/storage/state/scoring/physics/merge/render/*/ui/*/audio/main`，删除旧 `outputs/game.js`。
+- `index.html` 按宪法顺序加载模块；测试从 `index.html` 解析脚本清单，不再硬编码旧入口。
+- 保留 `__tripleMelonDebug`，新增 `__sdwxDebug`；`createBall` 旧签名按 Q26 暂定。
+- `__sdwxDebug.triggerSkill/triggerUlt` 在 M1 为空实现并返回 `false`，待 M3/M4 接入。
+- `node work/check-all.js`：21 项 + 帧循环通过；模块文件均 ≤600 行，函数均 ≤80 行。
 
 ---
 
